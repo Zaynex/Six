@@ -4,7 +4,7 @@ import * as mongoose from 'mongoose';
 import * as path from 'path';
 import * as createError from 'http-errors';
 import * as morgan from 'morgan';
-import apiRoutes from './routes/book';
+import setRoutes from './routes/book';
 
 const app = express();
 app.use(morgan('dev'));
@@ -14,25 +14,22 @@ app.set('port', (process.env.PORT || 3000));
 
 // see angular.json
 app.use('/', express.static(path.join(__dirname, '../public')));
-app.use('/api', apiRoutes);
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+
 
 app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  res.status(err.status || 500);
-  res.send(err.status);
+  res.sendStatus(err.status || 500);
 });
 
 mongoose.connect('mongodb://localhost/six', {promiseLibrary: require('bluebird')})
   .then(() => {
     console.log('Connected to MongoDB');
 
-    const port = app.get('port');
+    setRoutes(app);
+
     if (!module.parent) {
+      const port = app.get('port');
       app.listen(port, () => {
         console.log('listening on port' + port);
       });
